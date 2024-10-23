@@ -1,0 +1,40 @@
+#include <windows.h>
+#include <iostream>
+
+void LaunchProcess(const char* appName, const char* commandLine) {
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+    if (!CreateProcess(
+        appName,              
+        (LPSTR)commandLine,   
+        NULL,                
+        NULL,                 
+        FALSE,                
+        0,                    
+        NULL,                 
+        NULL,                 
+        &si,                  
+        &pi                   
+    )) {
+        std::cerr << "Не вдалося створити процес. Код помилки: " << GetLastError() << std::endl;
+        return;
+    }
+    WaitForSingleObject(pi.hProcess, INFINITE);
+
+    DWORD exitCode;
+    if (GetExitCodeProcess(pi.hProcess, &exitCode)) {
+        std::cout << "Процес завершився з кодом: " << exitCode << std::endl;
+    } else {
+        std::cerr << "Не вдалося отримати код завершення процесу." << std::endl;
+    }
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+}
+
+int main() {
+    LaunchProcess("C:\\Windows\\System32\\notepad.exe", NULL);
+    return 0;
+}
