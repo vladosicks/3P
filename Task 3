@@ -1,0 +1,30 @@
+void LaunchProcessWithTimeout(const char* appName, const char* commandLine, DWORD timeout) {
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+
+    if (!CreateProcess(appName, (LPSTR)commandLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+        std::cerr << "Не вдалося створити процес. Код помилки: " << GetLastError() << std::endl;
+        return;
+    }
+    DWORD result = WaitForSingleObject(pi.hProcess, timeout);
+    if (result == WAIT_TIMEOUT) {
+        std::cout << "Час виконання перевищено, процес буде завершено..." << std::endl;
+        TerminateProcess(pi.hProcess, 1);
+    } else if (result == WAIT_OBJECT_0) {
+        DWORD exitCode;
+        if (GetExitCodeProcess(pi.hProcess, &exitCode)) {
+            std::cout << "Процес завершився з кодом: " << exitCode << std::endl;
+        }
+    } else {
+        std::cerr << "Помилка очікування завершення процесу." << std::endl;
+    }
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+}
+int main() {
+    LaunchProcessWithTimeout("C:\\Windows\\System32\\notepad.exe", NULL, 10000);
+    return 0;
+}
