@@ -1,0 +1,32 @@
+#define NUM_PROCESSES 2
+
+int main() {
+    const char* programs[NUM_PROCESSES] = {
+        "C:\\Windows\\System32\\notepad.exe",
+        "C:\\Windows\\System32\\calc.exe" 
+    };
+
+    PROCESS_INFORMATION pi[NUM_PROCESSES];
+    STARTUPINFO si[NUM_PROCESSES];
+    ZeroMemory(&si, sizeof(si));
+    for (int i = 0; i < NUM_PROCESSES; ++i) {
+        si[i].cb = sizeof(si[i]);
+
+        if (!CreateProcess(programs[i], NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si[i], &pi[i])) {
+            std::cerr << "Не вдалося створити процес: " << programs[i] << std::endl;
+        }
+    }
+    for (int i = 0; i < NUM_PROCESSES; ++i) {
+        WaitForSingleObject(pi[i].hProcess, INFINITE);
+
+        DWORD exitCode;
+        if (GetExitCodeProcess(pi[i].hProcess, &exitCode)) {
+            std::cout << "Процес " << programs[i] << " завершився з кодом: " << exitCode << std::endl;
+        }
+
+        CloseHandle(pi[i].hProcess);
+        CloseHandle(pi[i].hThread);
+    }
+
+    return 0;
+}
